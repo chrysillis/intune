@@ -1,31 +1,44 @@
-#Requires -Version 5.1
-#Requires -RunAsAdministrator
 <#
 .Synopsis
-Migrate profiles from domain to Intune.
+    Migrate to Intune.
+
 .Description
-Utilizes ForensIT profile migration tool to migrate domain profiles to their Intune counterparts.
+    Leaves any Active Directory domain and setups a scheduled task to join the workstation to Intune.
+
+.Example
+    .\Leave-Domain.ps1
+
+.Outputs
+    Log files stored in C:\Logs\Intune.
+
 .Notes
-Author: Chrysillis Collier
-Email: ccollier@micromenders.com
-Date: 01/05/2022
+    Author: Chrysi
+    Link:   https://github.com/DarkSylph/intune
+    Date:   01/21/2022
 #>
 
+#---------------------------------------------------------[Initialisations]--------------------------------------------------------
 
-#Defines script name
+#Requires -Version 5.1
+#Requires -RunAsAdministrator
+
+#----------------------------------------------------------[Declarations]----------------------------------------------------------
+
+#Script version
+$ScriptVersion = "v3.2.2"
+#Script name
 $App = "Leave Domain"
-#States the current version of this script
-$Version = "3.2.1"
-#Today's date and time
+#Today's date
 $Date = Get-Date -Format "MM-dd-yyyy-HH-mm-ss"
-#Destination for application logs
-$LogFilepath = "C:\Logs\" + $date + "-Domain-Logs.log"
+#Destination to store logs
+$LogFilePath = "C:\Logs\Intune\" + $date + "-Leave-Logs.log"
 #Path to the client package
-$Pkg = "https://rmm.micromenders.com/labtech/transfer/Scripts/AIMLP/Intune.zip"
+$Pkg = "https://contoso.com/intune.zip"
 #Client secrets
 $Username = "contoso\administrator"
 $Password = "Welcome!"
 
+#-----------------------------------------------------------[Functions]------------------------------------------------------------
 
 function Get-Files {
     <#
@@ -44,10 +57,14 @@ function Get-Files {
     process {
         try {
             if (-Not (Test-Path -Path "C:\Deploy")) {
-                Write-Verbose -Message "Creating new directory."
-                New-Item -ItemType Directory -Force -Path C:\Deploy | Out-Null
+                Write-Host "$(Get-Date): Creating new directory."
+                New-Item -ItemType Directory -Force -Path C:\Deploy\ | Out-Null
             }
-            $FileOut = "C:\Deploy\profwiz.zip"
+            if (-Not (Test-Path -Path "C:\Deploy\Intune")) {
+                Write-Host "$(Get-Date): Creating new directory."
+                New-Item -ItemType Directory -Force -Path C:\Deploy\Intune | Out-Null
+            }
+            $FileOut = "C:\Deploy\Intune\profwiz.zip"
             Write-Host "$(Get-Date): Downloading $URL to $FileOut..."
             $FileJob = Measure-Command { (New-Object System.Net.WebClient).DownloadFile($URL, $FileOut) }
             $FileTime = $FileJob.TotalSeconds
@@ -70,11 +87,18 @@ function Get-Files {
             }
         }
         catch {
-            Throw "There was an unrecoverable error: $($_.Exception.Message) Unable to download files."
+            Throw "Unable to download files: $($_.Exception.Message) "
         }
     }
 }
 function Get-Domain {
+    <#
+    .Synopsis
+    Leaves Active Directory
+    .Description
+    Checks the current status of the workstation whether it is domain joined, workgroup, or Azure AD joined.
+    Then it removes from the domain if it is domain joined and creates a task to join to Intune.
+    #>
     process {
         try {
             $status = dsregcmd /status
@@ -104,7 +128,7 @@ function Get-Domain {
             }    
         }
         catch {
-            Throw "There was an unrecoverable error: $($_.Exception.Message) Unable to determine status of domain."
+            Throw "Unable to determine status of domain: $($_.Exception.Message)"
         }
     }
 }
@@ -142,19 +166,26 @@ function Set-Task {
             Write-Host "$(Get-Date): Scheduled task to execute join to Azure AD 2 minutes from now..."
         }
         catch {
-            Throw "There was an unrecoverable error: $($_.Exception.Message) Unable to register task."
+            Throw "Unable to register task: $($_.Exception.Message)"
         }
     }
 }
-#Checks if the log path exists and if not, creates it.
+
+#-----------------------------------------------------------[Execution]------------------------------------------------------------
+
+#Sets up a destination for the logs
 if (-Not (Test-Path -Path "C:\Logs")) {
-    Write-Host -Message "Creating new log folder."
+    Write-Host "$(Get-Date): Creating new log folder."
     New-Item -ItemType Directory -Force -Path C:\Logs | Out-Null
 }
-#Begins the logging process to capture all output.
-Start-Transcript -Path $LogFilepath -Force
-Write-Host "$(Get-Date): Successfully started $App $Version on $env:computername"
-if (Test-Path "C:\Deploy\Profwiz.exe") {
+if (-Not (Test-Path -Path "C:\Logs\Intune")) {
+    Write-Host "$(Get-Date): Creating new log folder."
+    New-Item -ItemType Directory -Force -Path C:\Logs\Intune | Out-Null
+}
+#Begins the logging process to capture all output
+Start-Transcript -Path $logfilepath -Force
+Write-Host "$(Get-Date): Successfully started $app install script $ScriptVersion on $env:computername"
+if (Test-Path "C:\Deploy\Intune\Profwiz.exe") {
     Write-Host "$(Get-Date): This script has already been run on $env:computername, terminating script..."
     exit
 }
