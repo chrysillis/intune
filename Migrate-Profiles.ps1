@@ -14,7 +14,7 @@
 .Notes
     Author: Chrysi
     Link:   https://github.com/DarkSylph/intune
-    Date:   01/21/2022
+    Date:   01/24/2022
 #>
 
 #---------------------------------------------------------[Initialisations]--------------------------------------------------------
@@ -24,7 +24,7 @@
 #----------------------------------------------------------[Declarations]----------------------------------------------------------
 
 #Script version
-$ScriptVersion = "v3.2.2"
+$ScriptVersion = "v3.2.3"
 #Script name
 $App = "Migrate Profiles"
 #Today's date
@@ -51,9 +51,9 @@ Write-Host "$(Get-Date): Beginning profile migration now..."
 $arguments = '/SILENT'
 $Proc = Start-Process -PassThru -FilePath 'C:\Deploy\Intune\Profwiz.exe' -Verb RunAs -ArgumentList $arguments
 $Proc.WaitForExit()
-Write-Host "$(Get-Date): Cleaning up scheduled tasks..."
+Write-Host "$(Get-Date): Cleaning up scheduled jobs..."
 #Deletes the scheduled tasks as it's no longer needed
-Unregister-ScheduledTask -TaskName "Migrate Profiles" -Confirm:$false | Out-Null
+Get-ScheduledJob | Unregister-ScheduledJob -Force
 Write-Host "$(Get-Date): Cleaning up download directory..."
 #Clears the deploy directory
 Remove-Item "C:\Deploy" -Force -Recurse

@@ -14,7 +14,7 @@
 .Notes
     Author: Chrysi
     Link:   https://github.com/DarkSylph/intune
-    Date:   01/21/2022
+    Date:   01/24/2022
 #>
 
 #---------------------------------------------------------[Initialisations]--------------------------------------------------------
@@ -25,7 +25,7 @@
 #----------------------------------------------------------[Declarations]----------------------------------------------------------
 
 #Script version
-$ScriptVersion = "v3.2.2"
+$ScriptVersion = "v3.2.3"
 #Script name
 $App = "Leave Domain"
 #Today's date
@@ -157,12 +157,12 @@ function Remove-Domain {
 function Set-Task {
     process {
         try {
+            Get-ScheduledJob | Unregister-ScheduledJob -Force
             $TS = New-TimeSpan -Minutes 2
             $Time = (Get-Date) + $TS
-            $action = New-ScheduledTaskAction -Execute 'PowerShell.exe' -Argument '-ExecutionPolicy Bypass -File "C:\Deploy\Join-Intune.ps1"'
-            $trigger = New-ScheduledTaskTrigger -Once -At $Time
-            $principal = New-ScheduledTaskPrincipal -GroupId "NT Authority\System"
-            Register-ScheduledTask -Action $action -Trigger $trigger -Principal $principal -TaskName "Join Intune" -Description "Joins device to Azure AD."
+            $path = "C:\Deploy\Intune\Join-Intune.ps1"
+            $trigger = New-JobTrigger -Once -At $Time
+            Register-ScheduledJob -Name "Join Intune" -FilePath $path -Trigger $trigger
             Write-Host "$(Get-Date): Scheduled task to execute join to Azure AD 2 minutes from now..."
         }
         catch {

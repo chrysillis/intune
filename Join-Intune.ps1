@@ -14,7 +14,7 @@
 .Notes
     Author: Chrysi
     Link:   https://github.com/DarkSylph/intune
-    Date:   01/21/2022
+    Date:   01/24/2022
 #>
 
 #---------------------------------------------------------[Initialisations]--------------------------------------------------------
@@ -24,7 +24,7 @@
 #----------------------------------------------------------[Declarations]----------------------------------------------------------
 
 #Script version
-$ScriptVersion = "v3.2.2"
+$ScriptVersion = "v3.2.3"
 #Script name.
 $App = "Join Intune"
 #Today's date
@@ -39,14 +39,12 @@ $Pkg = "C:\Deploy\Intune\client.ppkg"
 function Set-Task {
     process {
         try {
-            $TS = New-TimeSpan -Minutes 3
+            $TS = New-TimeSpan -Minutes 2
             $Time = (Get-Date) + $TS
-            $action = New-ScheduledTaskAction -Execute 'PowerShell.exe' -Argument '-ExecutionPolicy Bypass -File "C:\Deploy\Intune\Migrate-Profiles.ps1"'
-            $trigger = New-ScheduledTaskTrigger -Once -At $Time
-            $principal = New-ScheduledTaskPrincipal -GroupId "NT Authority\System"
-            Unregister-ScheduledTask -TaskName "Join Intune" -Confirm:$false | Out-Null
-            Register-ScheduledTask -Action $action -Trigger $trigger -Principal $principal -TaskName "Migrate Profiles" -Description "Migrates profiles to Azure AD."
-            Write-Host "Scheduled task to execute migration of profiles to Azure AD 3 minutes from now..."
+            $path = "C:\Deploy\Intune\Migrate-Profiles.ps1"
+            $trigger = New-JobTrigger -Once -At $Time
+            Register-ScheduledJob -Name "Migrate Profiles" -FilePath $path -Trigger $trigger
+            Write-Host "$(Get-Date): Scheduled task to execute migration of profiles to Azure AD 2 minutes from now..."
         }
         catch {
             Throw "There was an unrecoverable error: $($_.Exception.Message) Unable to register task."
