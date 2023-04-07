@@ -51,12 +51,13 @@ Write-Host "$(Get-Date): Beginning profile migration now..."
 $arguments = '/SILENT'
 $Proc = Start-Process -PassThru -FilePath 'C:\Deploy\Intune\Profwiz.exe' -Verb RunAs -ArgumentList $arguments
 $Proc.WaitForExit()
-Write-Host "$(Get-Date): Cleaning up scheduled jobs..."
 #Deletes the scheduled tasks as it's no longer needed
+Write-Host "$(Get-Date): Cleaning up scheduled jobs..."
 Get-ScheduledJob | Unregister-ScheduledJob -Force
-Write-Host "$(Get-Date): Cleaning up download directory..."
 #Clears the deploy directory
+Write-Host "$(Get-Date): Cleaning up download directory..."
 Remove-Item "C:\Deploy" -Force -Recurse
 #Ends the logging process
 Stop-Transcript
+#Restarts the computer to activate the new changes
 Restart-Computer -Force

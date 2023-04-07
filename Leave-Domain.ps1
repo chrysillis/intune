@@ -158,12 +158,13 @@ function Set-Task {
     process {
         try {
             Get-ScheduledJob | Unregister-ScheduledJob -Force
-            $TS = New-TimeSpan -Minutes 2
+            $TS = New-TimeSpan -Minutes 1
             $Time = (Get-Date) + $TS
-            $path = "C:\Deploy\Intune\Join-Intune.ps1"
-            $trigger = New-JobTrigger -Once -At $Time
-            Register-ScheduledJob -Name "Join Intune" -FilePath $path -Trigger $trigger
-            Write-Host "$(Get-Date): Scheduled task to execute join to Azure AD 2 minutes from now..."
+            $Path = "C:\Deploy\Intune\Join-Intune.ps1"
+            $Trigger = New-JobTrigger -Once -At $Time
+            $Options = New-ScheduledJobOption -StartIfOnBattery
+            Register-ScheduledJob -Name "Join Intune" -FilePath $Path -Trigger $Trigger -ScheduledJobOption $Options
+            Write-Host "$(Get-Date): Scheduled task to execute join to Azure AD 1 minutes from now..."
         }
         catch {
             Throw "Unable to register task: $($_.Exception.Message)"

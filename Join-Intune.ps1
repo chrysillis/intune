@@ -71,6 +71,8 @@ Set-Task
 #Installs the client specific Intune provisioning package
 Write-Host "$(Get-Date): Installing provisioning package now..."
 Install-ProvisioningPackage -PackagePath $Pkg -QuietInstall -ForceInstall
+Start-Sleep -Seconds 5
+Restart-Computer -Force
 #Ends the logging process
 Stop-Transcript
 #Terminates the script
